@@ -204,7 +204,7 @@ class DrawingEditor:
         print('yes')
         self.canvas.bind("<Button-1>",  self.start_move)
         self.canvas.bind("<B1-Motion>", self.move_object1)
-        self.canvas.bind("<ButtonRelease-1>", self.end_move)
+        self.canvas.bind("<ButtonRelease-1>", self.end_move1)
         # self.canvas.unbind("<Button-1>")
         # self.canvas.unbind("<B1-Motion>")
         # self.canvas.unbind("<ButtonRelease-1>")
@@ -217,23 +217,61 @@ class DrawingEditor:
         x, y = event.x, event.y
         dx, dy = x - start_x, y - start_y
         for obj in list_of_selected:
-            obj.move(dx, dy)
+            if type(obj)==Rectangle:
+                obj.move(dx, dy)
+            if type(obj)==Line:
+                obj.move(dx, dy)
+            if type(obj)==Group:
+                for obj1 in obj.objects:
+                    if type(obj1)==Rectangle:
+                        obj1.move(dx, dy)
+                    if type(obj1)==Line:
+                        obj1.move(dx, dy)
         start_x, start_y = x, y
-    def end_move(self, event):
+    def end_move1(self, event):
+        global choice
         self.canvas.unbind("<Button-1>")
         self.canvas.unbind("<B1-Motion>")
         self.canvas.unbind("<ButtonRelease-1>")
+        choice = 'draw'
+        self.remove_rectangle()
         pass
     def remove_rectangle(self):
         # self.canvas.bind("<Button-1>", remove_rectangle)
+        
         global current_rectangle
+        x11,y11,x,y = self.canvas.coords(current_rectangle)
         if current_rectangle:
             self.canvas.delete(current_rectangle)
             current_rectangle = None
         # print(list_of_selected.objects)
         for obj in list_of_selected:
+            if type(obj)==Rectangle:
+                list_of_rectangles.__delitem__(list_of_rectangles.index(obj))
+            if type(obj)==Line:
+                list_of_lines.__delitem__(list_of_lines.index(obj))
             list_of_groups.append(obj)
+            
         list_of_selected.clear()
+        
+        # grp_obje = Group()
+        #     # grp_obje.add_object(list_of_lines[-1])
+        # for line in list_of_lines:
+        #     # grp_obje.add_object(line)
+        #     if line.x1 >= start_x and line.y1 >= start_y and line.x2 <= x and line.y2 <= y:
+        #         grp_obje.add_object(line)
+        #         list_of_lines.__delitem__(list_of_lines.index(line))
+        # for rectangle in list_of_rectangles:
+        #     if rectangle.x1 >= start_x and rectangle.y1 >= start_y and rectangle.x2 <= x and rectangle.y2 <= y:
+        #         grp_obje.add_object(rectangle)
+        #         list_of_rectangles.__delitem__(list_of_rectangles.index(rectangle))
+        #         print
+        # for group in list_of_groups:
+        #     for obj in group.objects:
+        #         if type(obj)==Line and obj.x1 >= start_x and obj.y1 >= start_y and obj.x2 <= x and obj.y2 <= y:
+        #             grp_obje.add_object(group)
+        #             break
+        
 
     def redraw_canvas(self):
         self.canvas.delete("all")
@@ -274,7 +312,10 @@ def end_rectangle(event):
                     # list_of_rectangles.__delitem__(list_of_rectangles.index(rectangle))
             for group in list_of_groups:
                 for obj in group.objects:
-                    if obj.x1 >= start_x and obj.y1 >= start_y and obj.x2 <= x and obj.y2 <= y:
+                    if type(obj)==Line and obj.x1 >= start_x and obj.y1 >= start_y and obj.x2 <= x and obj.y2 <= y:
+                        grp_obje.add_object(group)
+                        break
+                    elif type(obj)==Rectangle and obj.x1 >= start_x and obj.y1 >= start_y and obj.x2 <= x and obj.y2 <= y:
                         grp_obje.add_object(group)
                         break
             list_of_selected.append(grp_obje)
@@ -306,8 +347,12 @@ root = tk.Tk()
 root.title("Drawing Editor")
 editor = DrawingEditor(root)
 root.mainloop()
-print(list_of_rectangles)
-print(list_of_lines)
+
 # print(list_of_groups)
+print('gopal')
+print(list_of_lines)
+print('list of rectangles')
+print(list_of_rectangles)
+print('list of groups')
 for group in list_of_groups:
     print(group.objects)
