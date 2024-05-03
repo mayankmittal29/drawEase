@@ -54,7 +54,6 @@ class Line(DrawingObject):
         
         pass
     def show_on_select(self):
-        editor.canvas.itemconfig(self.id, fill="black")
         editor.canvas.itemconfig(self.id, dash=(5, 5))
         pass
     def show_properly(self):
@@ -81,7 +80,6 @@ class Rectangle(DrawingObject):
         # Check if (x, y) is inside the rectangle
         pass
     def move(self, dx, dy):
-        # print(self.id)
         editor.canvas.coords(self.id, self.x1 + dx, self.y1 + dy, self.x2 + dx, self.y2 + dy)
         self.x1 += dx
         self.y1 += dy
@@ -91,13 +89,9 @@ class Rectangle(DrawingObject):
         # Show dialog to edit rectangle properties
         pass
     def show_on_select(self):
-        # editor.canvas.itemconfig(self.id, fill="red")
         editor.canvas.itemconfig(self.id, dash=(5, 5))
-
         pass
     def show_properly(self):
-        # editor.canvas.itemconfig(self.id, fill="red")
-        # editor.canvas.itemconfig(self.id, dash=(5, 5))
         editor.canvas.itemconfig(self.id, dash=())
         pass
 
@@ -233,7 +227,6 @@ class DrawingEditor:
             destroy_button_by_text(self.root, "move")
             
             list_of_selected.clear()
-            print('idhr khaali kr di h ', list_of_selected)
             return 
         
         # Select the new object
@@ -246,13 +239,9 @@ class DrawingEditor:
         self.canvas.button.pack()
         
     def move_object(self):
-        print('yes')
         self.canvas.bind("<Button-1>",  self.start_move)
         self.canvas.bind("<B1-Motion>", self.move_object1)
         self.canvas.bind("<ButtonRelease-1>", self.end_move1)
-        # self.canvas.unbind("<Button-1>")
-        # self.canvas.unbind("<B1-Motion>")
-        # self.canvas.unbind("<ButtonRelease-1>")
         
     def start_move(self, event):
         global start_x, start_y
@@ -263,18 +252,12 @@ class DrawingEditor:
         
         x, y = event.x, event.y
         dx, dy = x - start_x, y - start_y
-        print('idhr h list_of_selected')
-        print(list_of_selected)
         for obj in list_of_selected:
-            
-            if type(obj)==Group:
-                for obj1 in obj.objects:
-                    if type(obj1)==Rectangle:
-                        obj1.move(dx, dy)
-                    if type(obj1)==Line:
-                        obj1.move(dx, dy)
-            else:
-                obj.move(dx, dy)
+            print('on time of moving check ', obj)
+            obj.move(dx, dy)
+        for obj in list_of_groups:
+            print('object', obj)
+            # obj.move(dx, dy)
         start_x, start_y = x, y
     def end_move1(self, event):
         global choice
@@ -282,43 +265,18 @@ class DrawingEditor:
         self.canvas.unbind("<B1-Motion>")
         self.canvas.unbind("<ButtonRelease-1>")
         choice = 'draw'
-        self.remove_rectangle()
         pass
     def remove_rectangle(self):
         # self.canvas.bind("<Button-1>", remove_rectangle)
         new_group = Group()
         global list_of_selected
         for obj in list_of_selected:
-            print(obj)
             if isinstance(obj, Line):
-                print('yes')
                 list_of_lines.__delitem__(list_of_lines.index(obj))
             if isinstance(obj, Rectangle):
-                print('yes1')
                 list_of_rectangles.__delitem__(list_of_rectangles.index(obj))
             new_group.add_object(obj)
         list_of_groups.append(new_group)
-        # list_of_selected.clear()
-        
-        # grp_obje = Group()
-        #     # grp_obje.add_object(list_of_lines[-1])
-        # for line in list_of_lines:
-        #     # grp_obje.add_object(line)
-        #     if line.x1 >= start_x and line.y1 >= start_y and line.x2 <= x and line.y2 <= y:
-        #         grp_obje.add_object(line)
-        #         list_of_lines.__delitem__(list_of_lines.index(line))
-        # for rectangle in list_of_rectangles:
-        #     if rectangle.x1 >= start_x and rectangle.y1 >= start_y and rectangle.x2 <= x and rectangle.y2 <= y:
-        #         grp_obje.add_object(rectangle)
-        #         list_of_rectangles.__delitem__(list_of_rectangles.index(rectangle))
-        #         print
-        # for group in list_of_groups:
-        #     for obj in group.objects:
-        #         if type(obj)==Line and obj.x1 >= start_x and obj.y1 >= start_y and obj.x2 <= x and obj.y2 <= y:
-        #             grp_obje.add_object(group)
-        #             break
-        
-
     def redraw_canvas(self):
         self.canvas.delete("all")
         for obj in self.objects:
@@ -343,22 +301,14 @@ def end_rectangle(event):
     if current_rectangle:
         x, y = event.x, event.y
         editor.canvas.coords(current_rectangle, start_x, start_y, x, y)
-        # print(f"Rectangle coordinates: ({start_x}, {start_y}) - ({x}, {y})")
         if choice == 'select':
-            # editor.canvas.delete(current_line)
-            grp_obje = Group()
-            # grp_obje.add_object(list_of_lines[-1])
+           
             for line in list_of_lines:
-                # grp_obje.add_object(line)
                 if line.x1 >= start_x and line.y1 >= start_y and line.x2 <= x and line.y2 <= y:
-                    # grp_obje.add_object(line)
                     list_of_selected.append(line)
-                    # list_of_lines.__delitem__(list_of_lines.index(line))
             for rectangle in list_of_rectangles:
                 if rectangle.x1 >= start_x and rectangle.y1 >= start_y and rectangle.x2 <= x and rectangle.y2 <= y:
-                    # grp_obje.add_object(rectangle)
                     list_of_selected.append(rectangle)
-                    # list_of_rectangles.__delitem__(list_of_rectangles.index(rectangle))
             for group in list_of_groups:
                 for obj in group.objects:
                     if isinstance(obj,Line) and obj.x1 >= start_x and obj.y1 >= start_y and obj.x2 <= x and obj.y2 <= y:
@@ -367,21 +317,12 @@ def end_rectangle(event):
                     elif isinstance(obj,Rectangle) and obj.x1 >= start_x and obj.y1 >= start_y and obj.x2 <= x and obj.y2 <= y:
                         list_of_selected.append(group)
                         break
-            # list_of_selected.append(grp_obje)
-            # list_of_selected.show_on_select()
             for obj in list_of_selected:
-                print('yha kiya h show on select',obj)
                 obj.show_on_select()
             editor.canvas.delete(current_rectangle)
             
             return
         list_of_rectangles.append(Rectangle(start_x, start_y, x, y, "black", "sharp", id=current_rectangle))
-def remove_rectangle(event):
-    global current_rectangle
-    if current_rectangle and choice == 'select':
-        canvas.delete(current_rectangle)
-        current_rectangle = None
-        choice = 'draw'
 def start_line(event):
     global start_x, start_y, current_line
     start_x, start_y = event.x, event.y
@@ -403,7 +344,6 @@ root.title("Drawing Editor")
 editor = DrawingEditor(root)
 root.mainloop()
 
-# print(list_of_groups)
 print('gopal')
 print(list_of_lines)
 print('list of rectangles')
@@ -412,3 +352,5 @@ print('list of groups')
 for group in list_of_groups:
     print('new_group')
     print(group)
+    for obj in group.objects:
+        print(obj, end='')  # print all objects in the group
