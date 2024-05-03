@@ -216,18 +216,13 @@ class DrawingEditor:
         global start_x, start_y
         x, y = event.x, event.y
         dx, dy = x - start_x, y - start_y
-        print(dx, dy)
         for obj in list_of_selected:
             obj.move(dx, dy)
         start_x, start_y = x, y
     def end_move(self, event):
-        global start_x, start_y
-        x, y = event.x, event.y
-        dx, dy = x - start_x, y - start_y
-        print(dx, dy)
-        for obj in list_of_selected:
-            obj.move(dx, dy)
-        start_x, start_y = x, y
+        self.canvas.unbind("<Button-1>")
+        self.canvas.unbind("<B1-Motion>")
+        self.canvas.unbind("<ButtonRelease-1>")
         pass
     def remove_rectangle(self):
         # self.canvas.bind("<Button-1>", remove_rectangle)
@@ -294,7 +289,6 @@ def remove_rectangle(event):
 def start_line(event):
     global start_x, start_y, current_line
     start_x, start_y = event.x, event.y
-    print(start_x, start_y)
     current_line = editor.canvas.create_line(start_x, start_y, start_x, start_y, tags="line")
 
 def draw_line(event):
@@ -306,7 +300,6 @@ def end_line(event):
     if current_line:
         x, y = event.x, event.y
         editor.canvas.coords(current_line, start_x, start_y, x, y)
-        # print(f"Line coordinates: ({start_x}, {start_y}) - ({x}, {y})")
         list_of_lines.append(Line(start_x, start_y, x, y, "black", id=current_line))
 # Example usage
 root = tk.Tk()
