@@ -7,6 +7,11 @@ list_of_rectangles = []
 list_of_lines = []
 list_of_groups = []
 list_of_selected = []
+def destroy_button_by_text(root, button_text):
+    for widget in root.winfo_children():
+        if isinstance(widget, tk.Button) and widget.cget("text") == button_text:
+            widget.destroy()
+            break
 class DrawingObject:
     def __init__(self):
         self.selected = False
@@ -17,6 +22,10 @@ class DrawingObject:
     def copy(self):
         pass
     def move(self, dx, dy):
+        pass
+    def show_on_select(self):
+        pass
+    def show_properly(self):
         pass
 
 class Line(DrawingObject):
@@ -43,6 +52,14 @@ class Line(DrawingObject):
     def edit(self, dialog):
         # Show dialog to edit line properties
         
+        pass
+    def show_on_select(self):
+        editor.canvas.itemconfig(self.id, fill="black")
+        editor.canvas.itemconfig(self.id, dash=(5, 5))
+        pass
+    def show_properly(self):
+        editor.canvas.itemconfig(self.id, dash=())
+        # editor.canvas.itemconfig(self.id, dash=(5, 5))
         pass
 
 class Rectangle(DrawingObject):
@@ -73,6 +90,16 @@ class Rectangle(DrawingObject):
     def edit(self, dialog):
         # Show dialog to edit rectangle properties
         pass
+    def show_on_select(self):
+        # editor.canvas.itemconfig(self.id, fill="red")
+        editor.canvas.itemconfig(self.id, dash=(5, 5))
+
+        pass
+    def show_properly(self):
+        # editor.canvas.itemconfig(self.id, fill="red")
+        # editor.canvas.itemconfig(self.id, dash=(5, 5))
+        editor.canvas.itemconfig(self.id, dash=())
+        pass
 
 class Group(DrawingObject):
     def __init__(self):
@@ -102,6 +129,14 @@ class Group(DrawingObject):
         for obj in self.objects:
             obj.move(dx, dy)
         pass
+    def show_on_select(self):
+        for obj in self.objects:
+            obj.show_on_select()
+        pass
+    def show_properly(self):
+        for obj in self.objects:
+            obj.show_properly()
+        pass
 
 current_rectangle = None
 current_line = None
@@ -114,7 +149,7 @@ class DrawingEditor:
         self.canvas = tk.Canvas(root, width=CANVAS_WIDTH, height=CANVAS_HEIGHT, bg="white")
         self.canvas.pack()
         self.objects = []
-        self.selected_object = None
+        self.selected_object = False
         
         # Add toolbar buttons and menu items for drawing operations
         self.create_menu()
@@ -186,11 +221,20 @@ class DrawingEditor:
     
     def select_object(self):
         global choice
+        global list_of_selected
 
         # Deselect the currently selected object
         if self.selected_object:
+            for obj in list_of_selected:
+                obj.show_properly()
             self.selected_object = False
             choice = 'draw'
+            destroy_button_by_text(self.root, "group")
+            destroy_button_by_text(self.root, "move")
+            
+            list_of_selected.clear()
+            print('idhr khaali kr di h ', list_of_selected)
+            return 
         
         # Select the new object
         self.selected_object = True
@@ -200,6 +244,7 @@ class DrawingEditor:
         self.canvas.button.pack()
         self.canvas.button = tk.Button(root, text="move", command=self.move_object)
         self.canvas.button.pack()
+        
     def move_object(self):
         print('yes')
         self.canvas.bind("<Button-1>",  self.start_move)
@@ -214,19 +259,22 @@ class DrawingEditor:
         start_x, start_y = event.x, event.y
     def move_object1(self, event):
         global start_x, start_y
+        global list_of_selected
+        
         x, y = event.x, event.y
         dx, dy = x - start_x, y - start_y
+        print('idhr h list_of_selected')
+        print(list_of_selected)
         for obj in list_of_selected:
-            if type(obj)==Rectangle:
-                obj.move(dx, dy)
-            if type(obj)==Line:
-                obj.move(dx, dy)
+            
             if type(obj)==Group:
                 for obj1 in obj.objects:
                     if type(obj1)==Rectangle:
                         obj1.move(dx, dy)
                     if type(obj1)==Line:
                         obj1.move(dx, dy)
+            else:
+                obj.move(dx, dy)
         start_x, start_y = x, y
     def end_move1(self, event):
         global choice
@@ -238,21 +286,19 @@ class DrawingEditor:
         pass
     def remove_rectangle(self):
         # self.canvas.bind("<Button-1>", remove_rectangle)
-        
-        global current_rectangle
-        x11,y11,x,y = self.canvas.coords(current_rectangle)
-        if current_rectangle:
-            self.canvas.delete(current_rectangle)
-            current_rectangle = None
-        # print(list_of_selected.objects)
+        new_group = Group()
+        global list_of_selected
         for obj in list_of_selected:
-            if type(obj)==Rectangle:
-                list_of_rectangles.__delitem__(list_of_rectangles.index(obj))
-            if type(obj)==Line:
+            print(obj)
+            if isinstance(obj, Line):
+                print('yes')
                 list_of_lines.__delitem__(list_of_lines.index(obj))
-            list_of_groups.append(obj)
-            
-        list_of_selected.clear()
+            if isinstance(obj, Rectangle):
+                print('yes1')
+                list_of_rectangles.__delitem__(list_of_rectangles.index(obj))
+            new_group.add_object(obj)
+        list_of_groups.append(new_group)
+        # list_of_selected.clear()
         
         # grp_obje = Group()
         #     # grp_obje.add_object(list_of_lines[-1])
@@ -292,7 +338,8 @@ def draw_rectangle(event):
         editor.canvas.coords(current_rectangle, start_x, start_y, x, y)
     # print(start_x, start_y, x, y)
 def end_rectangle(event):
-    global start_x, start_y, current_rectangle
+    global start_x, start_y, current_rectangle, choice, list_of_selected
+    
     if current_rectangle:
         x, y = event.x, event.y
         editor.canvas.coords(current_rectangle, start_x, start_y, x, y)
@@ -304,21 +351,29 @@ def end_rectangle(event):
             for line in list_of_lines:
                 # grp_obje.add_object(line)
                 if line.x1 >= start_x and line.y1 >= start_y and line.x2 <= x and line.y2 <= y:
-                    grp_obje.add_object(line)
+                    # grp_obje.add_object(line)
+                    list_of_selected.append(line)
                     # list_of_lines.__delitem__(list_of_lines.index(line))
             for rectangle in list_of_rectangles:
                 if rectangle.x1 >= start_x and rectangle.y1 >= start_y and rectangle.x2 <= x and rectangle.y2 <= y:
-                    grp_obje.add_object(rectangle)
+                    # grp_obje.add_object(rectangle)
+                    list_of_selected.append(rectangle)
                     # list_of_rectangles.__delitem__(list_of_rectangles.index(rectangle))
             for group in list_of_groups:
                 for obj in group.objects:
-                    if type(obj)==Line and obj.x1 >= start_x and obj.y1 >= start_y and obj.x2 <= x and obj.y2 <= y:
-                        grp_obje.add_object(group)
+                    if isinstance(obj,Line) and obj.x1 >= start_x and obj.y1 >= start_y and obj.x2 <= x and obj.y2 <= y:
+                        list_of_selected.append(group)
                         break
-                    elif type(obj)==Rectangle and obj.x1 >= start_x and obj.y1 >= start_y and obj.x2 <= x and obj.y2 <= y:
-                        grp_obje.add_object(group)
+                    elif isinstance(obj,Rectangle) and obj.x1 >= start_x and obj.y1 >= start_y and obj.x2 <= x and obj.y2 <= y:
+                        list_of_selected.append(group)
                         break
-            list_of_selected.append(grp_obje)
+            # list_of_selected.append(grp_obje)
+            # list_of_selected.show_on_select()
+            for obj in list_of_selected:
+                print('yha kiya h show on select',obj)
+                obj.show_on_select()
+            editor.canvas.delete(current_rectangle)
+            
             return
         list_of_rectangles.append(Rectangle(start_x, start_y, x, y, "black", "sharp", id=current_rectangle))
 def remove_rectangle(event):
@@ -355,4 +410,5 @@ print('list of rectangles')
 print(list_of_rectangles)
 print('list of groups')
 for group in list_of_groups:
-    print(group.objects)
+    print('new_group')
+    print(group)
