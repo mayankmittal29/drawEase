@@ -6,8 +6,7 @@ from PIL import Image, ImageTk
 
 CANVAS_WIDTH = 800
 CANVAS_HEIGHT = 800
-list_of_rectangles = []
-list_of_lines = []
+list_of_objects = []
 list_of_groups = []
 list_of_selected = []
 def destroy_button_by_text(root, button_text):
@@ -32,7 +31,10 @@ class DrawingObject:
         pass
     def delete(self):
         pass
-
+    def check_in_area(self,start_x,start_y, x, y,):
+        pass
+    def get_code(self):
+        pass
 class Line(DrawingObject):
     def __init__(self, x1, y1, x2, y2, color,id):
         super().__init__()
@@ -69,8 +71,8 @@ class Line(DrawingObject):
         # editor.canvas.itemconfig(self.id, dash=(5, 5))
         pass
     def ungroup(self):
-        global list_of_lines
-        list_of_lines.append(Line(self.x1, self.y1, self.x2, self.y2, self.color, id=self.id))
+        global list_of_objects
+        list_of_objects.append(Line(self.x1, self.y1, self.x2, self.y2, self.color, id=self.id))
         pass
     def delete(self):
         # return super().delete()
@@ -82,8 +84,11 @@ class Line(DrawingObject):
         if self.dash_offset >= 10:
             self.dash_offset = 0
         editor.canvas.after(50, self.move_dash)
-
-
+    def check_in_area(self,start_x,start_y, x, y,):
+        if self.x1 >= start_x and self.y1 >= start_y and self.x2 <= x and self.y2 <= y:
+            return True
+    def get_code(self):
+        return 'line '+ str(self.x1)+' '+ str(self.y1)+' '+ str(self.x2)+' '+ str(self.y2)+' '+ self.color+'\n'
 
 class Rectangle(DrawingObject):
     def __init__(self, x1, y1, x2, y2, color, corner_style,id):
@@ -121,8 +126,8 @@ class Rectangle(DrawingObject):
         editor.canvas.itemconfig(self.id, dash=())
         pass
     def ungroup(self):
-        global list_of_rectangles
-        list_of_rectangles.append(Rectangle(self.x1, self.y1, self.x2, self.y2, self.color, self.corner_style, id=self.id))
+        global list_of_objects
+        list_of_objects.append(Rectangle(self.x1, self.y1, self.x2, self.y2, self.color, self.corner_style, id=self.id))
 
         pass
     def delete(self):
@@ -135,7 +140,11 @@ class Rectangle(DrawingObject):
         if self.dash_offset >= 10:
             self.dash_offset = 0
         editor.canvas.after(50, self.move_dash)
-
+    def check_in_area(self,start_x,start_y, x, y,):
+        if self.x1 >= start_x and self.y1 >= start_y and self.x2 <= x and self.y2 <= y:
+            return True
+    def get_code(self):
+        return 'rectangle '+ str(self.x1)+' '+ str(self.y1)+' '+ str(self.x2)+' '+ str(self.y2)+' '+ self.color+' '+ self.corner_style+'\n'
 class Group(DrawingObject):
     def __init__(self):
         super().__init__()
@@ -197,23 +206,21 @@ class Group(DrawingObject):
         for obj in self.objects:
             obj.delete()
         pass
+    def check_in_area(self, start_x, start_y, x, y):
+        for obj in self.objects:
+            if obj.check_in_area(start_x, start_y, x, y):
+                return True
+    def get_code(self):
+        ascii_code = 'begin\n'
+        for obj in self.objects:
+           ascii_code+= obj.get_code()
+        ascii_code+= 'end\n'
+        return ascii_code
 current_rectangle = None
 current_line = None
 choice = 'draw'
 start_x, start_y = 0, 0 
-def generate_group_code():
-    global list_of_groups
-    ascii_code = 'begin\n'
-    for group in list_of_groups:
-            for obj in group.objects:
-                if isinstance(obj,Line):
-                    ascii_code += 'line '+ str(obj.x1)+' '+ str(obj.y1)+' '+ str(obj.x2)+' '+ str(obj.y2)+' '+ obj.color+'\n'
-                if isinstance(obj,Rectangle):
-                    ascii_code += 'rectangle '+ str(obj.x1)+' '+ str(obj.y1)+' '+ str(obj.x2)+' '+ str(obj.y2)+' '+ obj.color+' '+ obj.corner_style+'\n'
-                else:
-                    ascii_code+=generate_group_code()
-    ascii_code+= 'end\n'
-    return ascii_code
+
     
 class DrawingEditor:
     global canvas
@@ -289,14 +296,10 @@ class DrawingEditor:
                 pass
     def generate_code(self):
         self.asciicode = ''
-        for line in list_of_lines:
-            # self.objects.append(line)
-            self.asciicode += 'line '+str(line.x1)+' '+ str(line.y1)+' '+ str(line.x2)+' '+ str(line.y2)+' '+ line.color+'\n'
-        for rectangle in list_of_rectangles:
-            # self.objects.append(rectangle)
-            self.asciicode += 'rectangle '+str(rectangle.x1)+' '+ str(rectangle.y1)+' '+ str(rectangle.x2)+' '+ str(rectangle.y2)+' '+ rectangle.color+' '+rectangle.corner_style+'\n'
-        # for group in list_of_groups:
-        self.asciicode+=generate_group_code()
+        for line in list_of_objects:
+            self.asciicode+=line.get_code()
+        for group in list_of_groups:
+            self.asciicode+=group.get_code()
         print(self.asciicode)
     def save_drawing(self, filename):
         self.generate_code()
@@ -354,12 +357,11 @@ class DrawingEditor:
     def delete(self):
         for obj in list_of_selected:
             obj.delete()
-            if isinstance(obj,Line):
-                list_of_lines.__delitem__(list_of_lines.index(obj))
-            if isinstance(obj,Rectangle):
-                list_of_rectangles.__delitem__(list_of_rectangles.index(obj))
+           
             if isinstance(obj,Group):
                 list_of_groups.__delitem__(list_of_groups.index(obj))
+            else:
+                list_of_objects.__delitem__(list_of_objects.index(obj))
         list_of_selected.clear()
     def ungroupall(self):
         # global list_of_groups
@@ -399,11 +401,13 @@ class DrawingEditor:
         # self.canvas.bind("<Button-1>", remove_rectangle)
         new_group = Group()
         global list_of_selected
+        global list_of_groups
+        global list_of_objects
         for obj in list_of_selected:
-            if isinstance(obj, Line):
-                list_of_lines.__delitem__(list_of_lines.index(obj))
-            if isinstance(obj, Rectangle):
-                list_of_rectangles.__delitem__(list_of_rectangles.index(obj))
+            if isinstance(obj,Group):
+                list_of_groups.__delitem__(list_of_groups.index(obj))
+            else:
+                list_of_objects.__delitem__(list_of_objects.index(obj))
             new_group.add_object(obj)
             
         list_of_groups.append(new_group)
@@ -433,26 +437,19 @@ def end_rectangle(event):
         editor.canvas.coords(current_rectangle, start_x, start_y, x, y)
         if choice == 'select':
            
-            for line in list_of_lines:
-                if line.x1 >= start_x and line.y1 >= start_y and line.x2 <= x and line.y2 <= y:
+            for line in list_of_objects:
+                if line.check_in_area(start_x, start_y, x, y):
                     list_of_selected.append(line)
-            for rectangle in list_of_rectangles:
-                if rectangle.x1 >= start_x and rectangle.y1 >= start_y and rectangle.x2 <= x and rectangle.y2 <= y:
-                    list_of_selected.append(rectangle)
             for group in list_of_groups:
-                for obj in group.objects:
-                    if isinstance(obj,Line) and obj.x1 >= start_x and obj.y1 >= start_y and obj.x2 <= x and obj.y2 <= y:
-                        list_of_selected.append(group)
-                        break
-                    elif isinstance(obj,Rectangle) and obj.x1 >= start_x and obj.y1 >= start_y and obj.x2 <= x and obj.y2 <= y:
-                        list_of_selected.append(group)
-                        break
+                if group.check_in_area(start_x, start_y, x, y):
+                    list_of_selected.append(group)
+                   
             for obj in list_of_selected:
                 obj.show_on_select()
             editor.canvas.delete(current_rectangle)
             
             return
-        list_of_rectangles.append(Rectangle(start_x, start_y, x, y, "black", "sharp", id=current_rectangle))
+        list_of_objects.append(Rectangle(start_x, start_y, x, y, "black", "sharp", id=current_rectangle))
 def start_line(event):
     global start_x, start_y, current_line
     start_x, start_y = event.x, event.y
@@ -467,7 +464,7 @@ def end_line(event):
     if current_line:
         x, y = event.x, event.y
         editor.canvas.coords(current_line, start_x, start_y, x, y)
-        list_of_lines.append(Line(start_x, start_y, x, y, "black", id=current_line))
+        list_of_objects.append(Line(start_x, start_y, x, y, "black", id=current_line))
 # Example usage
 root = tk.Tk()
 root.title("Drawing Editor")
@@ -475,9 +472,9 @@ editor = DrawingEditor(root)
 root.mainloop()
 
 print('gopal')
-print(list_of_lines)
+print(list_of_objects)
 print('list of rectangles')
-print(list_of_rectangles)
+print(list_of_objects)
 print('list of groups')
 for group in list_of_groups:
     print('new_group')
