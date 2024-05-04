@@ -1,0 +1,7 @@
+begin
+rectangle 506 286 592 496 black sharp
+begin
+rectangle 207 340 294 391 black sharp
+rectangle 342 323 439 458 black sharp
+end
+end

@@ -1,0 +1,6 @@
+line 202 44 162 322 black
+begin
+line 112 156 402 276 black
+line 266 429 407 80 black
+end
+line 504 457 150 564 black

@@ -13,8 +13,47 @@ first=0
 second=0
 third=0
 fourth=0
+list_of_copied = []
+def parse_drawing_file(file_path):
+    list_objects = []
+    list_of_groups = []
+    current_group = None
+    group_stack = []
 
+    with open(file_path, 'r') as file:
+        for line in file:
+            parts = line.split()
+            if parts[0] == 'line':
+                # Create a Line object
+                obj = Line(int(parts[1]), int(parts[2]), int(parts[3]), int(parts[4]), parts[5],1)
+                if current_group:
+                    current_group.add_object(obj)
+                else:
+                    list_objects.append(obj)
+            elif parts[0] == 'rect':
+                # Create a Rect object
+                obj = Rectangle(int(parts[1]), int(parts[2]), int(parts[3]), int(parts[4]), parts[5], parts[6],1)
+                if current_group:
+                    current_group.add_object(obj)
+                else:
+                    list_objects.append(obj)
+            elif parts[0] == 'begin':
+                # Start a new group
+                new_group = Group()
+                if current_group:
+                    current_group.add_object(new_group)
+                    group_stack.append(current_group)
+                else:
+                    list_of_groups.append(new_group)
+                current_group = new_group
+            elif parts[0] == 'end':
+                # End the current group
+                if group_stack:
+                    current_group = group_stack.pop()
+                else:
+                    current_group = None
 
+    return list_objects, list_of_groups
 
 def draw_rounded_rectangle(canvas, x1, y1, x2, y2, radius, color,**kwargs):
     points = [x1 + radius, y1,
@@ -76,7 +115,10 @@ class DrawingObject:
         pass
     def show_edit_menu(self):
         pass
-    
+    def draw_item(self):
+        pass
+    def copy(self):
+        pass
     
 class Line(DrawingObject):
     def __init__(self, x1, y1, x2, y2, color,id):
@@ -126,7 +168,7 @@ class Line(DrawingObject):
         editor.canvas.delete(self.id)
         pass
     def move_dash(self):
-        self.dash_offset += 2
+        self.dash_offset += 0.5
         editor.canvas.itemconfig(self.id, dashoffset=self.dash_offset)
         if self.dash_offset >= 10:
             self.dash_offset = 0
@@ -136,7 +178,15 @@ class Line(DrawingObject):
             return True
     def get_code(self):
         return 'line '+ str(self.x1)+' '+ str(self.y1)+' '+ str(self.x2)+' '+ str(self.y2)+' '+ self.color+'\n'
-
+    def draw_item(self):
+        self.id = editor.canvas.create_line(self.x1, self.y1, self.x2, self.y2, fill=self.color)
+        
+        
+    def copy(self):
+        new_id = editor.canvas.create_line(self.x1+40, self.y1+40, self.x2+40, self.y2+40, fill=self.color)
+        obj = Line(self.x1+40, self.y1+40, self.x2+40, self.y2+40, self.color, id=new_id)
+      # list_of_copied.append(obj)
+        return obj 
 class Rectangle(DrawingObject):
     def __init__(self, x1, y1, x2, y2, color, corner_style,id):
         super().__init__()
@@ -196,7 +246,7 @@ class Rectangle(DrawingObject):
         editor.canvas.delete(self.id)
         pass
     def move_dash(self):
-        self.dash_offset += 2
+        self.dash_offset += 0.5
         editor.canvas.itemconfig(self.id, dashoffset=self.dash_offset)
         if self.dash_offset >= 10:
             self.dash_offset = 0
@@ -206,6 +256,17 @@ class Rectangle(DrawingObject):
             return True
     def get_code(self):
         return 'rectangle '+ str(self.x1)+' '+ str(self.y1)+' '+ str(self.x2)+' '+ str(self.y2)+' '+ self.color+' '+ self.corner_style+'\n'
+    def draw_item(self):
+        self.id = editor.canvas.create_rectangle(self.x1, self.y1, self.x2, self.y2, outline=self.color)
+        if self.corner_style == 'Rounded':
+            self.id = draw_rounded_rectangle(editor.canvas, self.x1, self.y1, self.x2, self.y2, 20, fill=self.color, outline="")
+        pass
+    def copy(self):
+        new_id = editor.canvas.create_rectangle(self.x1+40, self.y1+40, self.x2+40, self.y2+40, outline='black')
+        print('new_id',new_id)
+        obj = Rectangle(self.x1+40, self.y1+40, self.x2+40, self.y2+40, self.color, self.corner_style, id=new_id)
+
+        return obj
 class Group(DrawingObject):
     def __init__(self):
         super().__init__()
@@ -277,6 +338,15 @@ class Group(DrawingObject):
            ascii_code+= obj.get_code()
         ascii_code+= 'end\n'
         return ascii_code
+    def draw_item(self):
+        for obj in self.objects:
+            obj.draw_item()
+        pass
+    def copy(self):
+        new_group = Group()
+        for obj in self.objects:
+            new_group.add_object(obj.copy())
+        return new_group
 current_rectangle = None
 current_line = None
 choice = 'draw'
@@ -330,6 +400,7 @@ class DrawingEditor:
         file_menu.add_command(label="Open", command=self.open_file)
         file_menu.add_command(label="Save", command=self.save_file)
         self.menu.add_cascade(label="File", menu=file_menu)
+        
     
     def create_toolbar(self):
         # Create toolbar with drawing tools
@@ -353,10 +424,36 @@ class DrawingEditor:
             self.save_drawing(filename)
     
     def load_drawing(self, filename):
-        with open(filename, 'r') as file:
-            for line in file:
-                # Parse each line and create corresponding drawing objects
-                pass
+        global list_of_objects, list_of_groups
+        list_of_objects,list_of_groups = parse_drawing_file(filename)
+        print('list of objects')
+        for obj in list_of_objects:
+            obj.draw_item()
+        for group in list_of_groups:
+            group.draw_item()
+    def copy(self):
+        global list_of_selected
+        for obj in list_of_selected:
+            # obj.copy()
+            new_obj = obj.copy()
+            if isinstance(obj,Group):
+                list_of_groups.append(new_obj)
+                list_of_copied.append(new_obj)
+            else:
+                # new_obj  = 
+                list_of_objects.append(new_obj)
+                list_of_copied.append(new_obj)
+        
+        for obj in list_of_selected:
+            obj.show_properly()
+        list_of_selected.clear()
+        for obj in list_of_copied:
+            list_of_selected.append(obj)
+        for obj in list_of_selected:
+            obj.show_on_select()
+        list_of_copied.clear()
+        
+        pass
     def generate_code(self):
         self.asciicode = ''
         for line in list_of_objects:
@@ -396,6 +493,7 @@ class DrawingEditor:
             destroy_button_by_text(self.root, "delete")
             destroy_button_by_text(self.root, "line_edit_button")
             destroy_button_by_text(self.root, "Corner_style_change")
+            destroy_button_by_text(self.root, "copy")
             
             list_of_selected.clear()
             return 
@@ -414,7 +512,8 @@ class DrawingEditor:
         self.canvas.button.pack(side=tk.LEFT, padx=10, pady=10)
         self.canvas.button = tk.Button(root, text="delete", command=self.delete)
         self.canvas.button.pack(side=tk.LEFT, padx=10, pady=10)
-        
+        self.canvas.button = tk.Button(root, text="copy", command=self.copy)
+        self.canvas.button.pack(side=tk.LEFT, padx=10, pady=10)
         
     
     def edit_line(self):
