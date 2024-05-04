@@ -1,0 +1,5 @@
+rectangle 100 107 263 255 black sharp
+begin
+rectangle 164 352 309 474 black sharp
+rectangle 356 354 480 472 black sharp
+end
