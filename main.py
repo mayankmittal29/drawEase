@@ -9,11 +9,50 @@ CANVAS_HEIGHT = 800
 list_of_objects = []
 list_of_groups = []
 list_of_selected = []
+first=0
+second=0
+third=0
+fourth=0
+
+
+
+def draw_rounded_rectangle(canvas, x1, y1, x2, y2, radius, color,**kwargs):
+    points = [x1 + radius, y1,
+              x1 + radius, y1,
+              x2 - radius, y1,
+              x2 - radius, y1,
+              x2, y1,
+              x2, y1 + radius,
+              x2, y1 + radius,
+              x2, y2 - radius,
+              x2, y2 - radius,
+              x2, y2,
+              x2 - radius, y2,
+              x2 - radius, y2,
+              x1 + radius, y2,
+              x1 + radius, y2,
+              x1, y2,
+              x1, y2 - radius,
+              x1, y2 - radius,
+              x1, y1 + radius,
+              x1, y1 + radius,
+              x1, y1]
+    return canvas.create_polygon(points, outline=kwargs.get('outline', 'black'), width=kwargs.get('width', 1), smooth=True,fill=color)
+
+
+
+
+
+
+
+
 def destroy_button_by_text(root, button_text):
     for widget in root.winfo_children():
         if isinstance(widget, tk.Button) and widget.cget("text") == button_text:
             widget.destroy()
             break
+
+        
 class DrawingObject:
     def __init__(self):
         self.selected = False
@@ -66,6 +105,7 @@ class Line(DrawingObject):
         editor.edit_line()
 
     def set_color(self, color):
+        self.color=color
         editor.canvas.itemconfig(self.id,fill=color)
     
 
@@ -122,12 +162,14 @@ class Rectangle(DrawingObject):
         self.y1 += dy
         self.x2 += dx
         self.y2 += dy
+        
     def edit(self):
         print("yes,gussing")
         editor.edit_line()
         editor.edit_rect_corner()
 
     def set_color(self, color):
+        self.color=color
         editor.canvas.itemconfig(self.id,fill=color)
     
     def set_corner(self,corner):
@@ -251,6 +293,8 @@ class DrawingEditor:
         self.selected_object = False
         self.code = ''
         self.asciicode = ''
+        
+        
         
         # Add toolbar buttons and menu items for drawing operations
         self.create_menu()
@@ -422,13 +466,30 @@ class DrawingEditor:
     
     def change_corner(self, corner):
         # Change the color of the selected line(s)
-        global list_of_selected
+        global list_of_selected,first,second,third,fourth
         for obj in list_of_selected:
             if isinstance(obj,Rectangle):
-                obj.set_corner(corner)
+                # obj.set_corner(corner)
+                print("ha")
+                if corner=="Rounded":
+                    self.canvas.delete(obj.id)
+                    # self.canvas.create_rectangle(obj.x1, obj.y1, obj.x2, obj.y2, outline="grey")
+                    obj.id=draw_rounded_rectangle(editor.canvas, obj.x1, obj.y1, obj.x2, obj.y2, 20,obj.color ,outline='black', width=1)
+                    obj.show_on_select()
+                    
+                else:
+                    self.canvas.delete(obj.id)
+                    obj.id=self.canvas.create_rectangle(obj.x1, obj.y1, obj.x2, obj.y2, outline="grey",fill=obj.color)
+                    obj.show_on_select()
+                    # self.canvas.delete(first)
+                    # self.canvas.delete(second)
+                    # self.canvas.delete(third)
+                    # self.canvas.delete(fourth)
+                    
 
-        # Redraw the canvas to reflect the color changes
-        # self.redraw_canvas()
+
+                # Redraw the canvas to reflect the color changes
+                # self.redraw_canvas()
     
         
         
@@ -502,15 +563,14 @@ class DrawingEditor:
             obj.draw(self.canvas)
             
     
-    
-    
+
 def start_rectangle(event):
     global start_x, start_y, current_rectangle
     start_x, start_y = event.x, event.y
     if choice == 'select':
         current_rectangle = editor.canvas.create_rectangle(start_x, start_y, start_x, start_y, outline="grey", dash=(5, 5))
     else:
-        current_rectangle = editor.canvas.create_rectangle(start_x, start_y, start_x, start_y, outline="grey")
+        current_rectangle = editor.canvas.create_rectangle(start_x, start_y, start_x, start_y, outline="grey",width=2)
 
         
 def draw_rectangle(event):
@@ -543,7 +603,7 @@ def end_rectangle(event):
             editor.canvas.delete(current_rectangle)
             
             return
-        list_of_objects.append(Rectangle(start_x, start_y, x, y, "black", "sharp", id=current_rectangle))
+        list_of_objects.append(Rectangle(start_x, start_y, x, y, "", "sharp", id=current_rectangle))
 def start_line(event):
     global start_x, start_y, current_line
     start_x, start_y = event.x, event.y
@@ -559,11 +619,15 @@ def end_line(event):
         x, y = event.x, event.y
         editor.canvas.coords(current_line, start_x, start_y, x, y)
         list_of_objects.append(Line(start_x, start_y, x, y, "black", id=current_line))
+        
+
 # Example usage
 root = tk.Tk()
 root.title("Drawing Editor")
 editor = DrawingEditor(root)
 root.mainloop()
+
+
 
 print('gopal')
 print(list_of_objects)
