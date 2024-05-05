@@ -561,6 +561,14 @@ class DrawingEditor:
     
     def load_drawing(self, filename):
         global list_of_objects, list_of_groups
+        for obj in list_of_objects:
+            obj.delete()
+        for obj in list_of_groups:
+            obj.delete()
+        list_of_groups.clear()
+        list_of_objects.clear()
+        list_of_selected.clear()
+        list_of_copied.clear()
         list_of_objects,list_of_groups = parse_drawing_file(filename)
         print('list of objects')
         for obj in list_of_objects:
