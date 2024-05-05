@@ -1,0 +1,132 @@
+@startuml
+
+Class Line{
+    + id:int
+    + x1:Float
+    + y1:Float
+    + x2:Float
+    + y2:Float
+    + color:String
+    + dash_offset:Float
+    + draw():void
+    + set_id():void
+    + is_clicked(x,y):void
+    + move(dx,dy):void
+    + edit():void
+    + set_color(color):void
+    + show_on_select():void
+    + show_properly():void
+    + ungroup():void
+    + delete():void
+    + move_dash():void
+    + check_in_area(start_x,start_y,x,y):bool
+    + get_code():String
+    + draw_item():void
+    + copy():Line
+}
+
+Class Rectangle{
+    + id:int
+    + x1:Float
+    + y1:Float
+    + x2:Float
+    + y2:Float
+    + color:String
+    + corner_style:String
+    + dash_offset:Float
+    + draw(canvas):void
+    + set_id(id):void
+    + is_clicked(x,y):void
+    + move(dx,dy):void
+    + edit():void
+    + set_color(color):void
+    + set_corner(corner):void
+    + show_on_select():void
+    + show_properly():void
+    + ungroup():void
+    + delete():void
+    + move_dash():void
+    + check_in_area(start_x,start_y,x,y):bool
+    + get_code():String
+    + draw_item():void
+    + copy():Rectangle
+}
+
+Class Group{
+    + List<DrawingObjects>:List
+    + add_object(object):void
+    + draw(canvas):void
+    + is_clicked(x,y):void
+    + delete():void
+    + copy():void
+    + move():void
+    + show_on_select():void
+    + show_properly():void
+    + ungroup():void
+    + ungroup_all():void
+    + delete():void
+    + check_in_area():bool
+    + get_code():String
+    + draw_item():void
+    + copy():Group
+}
+  
+class DrawingObject{
+    + is_clicked(x, y):void
+    + delete():void
+    + copy():void
+    + move(dx, dy):void
+    + show_on_select():void
+    + show_properly():void
+    + delete():void
+    + check_in_area(start_x,start_y, x, y):void
+    + get_code():void
+    + show_edit_menu():void
+    + draw_item():void
+    + copy():
+}
+
+class DrawingEditor{
+    + selected_objects:bool
+    + asciicode:String
+    + canvas:canvas
+    + create_menu():void
+    + create_toolbar():void
+    + create_line():void
+    + create_rectangle():void
+    + open_file():void
+    + save_file():void
+    + load_drawing(filename):void
+    + copy():void
+    + generate_code():void
+    + save_drawing(filename):void
+    + on_click(event):void
+    + select_object():void
+    + edit_line():void
+    + show_color_options():void
+    + change_line_color(color):void
+    + edit_rect_corner():void
+    + show_corner_options():void
+    + change_corner(corner):void
+    + ungroup():void
+    + delete():void
+    + ungroupall():void
+    + move_object():void
+    + start_move(event):void
+    + move_object1(event):void
+    + end_move1(event):void
+    + remove_rectangle():void
+    + redraw_canvas():void
+}
+
+Group "1" *-- "0..*" DrawingObject
+DrawingObject <|-- Line
+DrawingObject <|-- Rectangle
+DrawingObject <|-- Group
+DrawingEditor "1" -- "0.." Line
+DrawingEditor "1" -- "0.." Rectangle
+DrawingEditor "1" -- "0.." DrawingObject
+DrawingEditor "1" -- "0.." Group
+
+
+@enduml
