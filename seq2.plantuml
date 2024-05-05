@@ -1,0 +1,27 @@
+@startuml
+
+participant Mouse
+participant DrawingEditor
+participant Group
+participant DrawingObject
+
+Mouse -> DrawingEditor: Mouse selection\nof element in group
+activate DrawingEditor
+DrawingEditor -> Group: is_clicked(x,y)
+activate Group
+Group --> DrawingEditor: Object clicked
+deactivate Group
+DrawingEditor -> DrawingObject: show_on_select()
+activate DrawingObject
+DrawingObject --> DrawingEditor: Object selected
+deactivate DrawingObject
+DrawingEditor -> DrawingObject: ungroupall()
+activate DrawingObject
+DrawingObject --> DrawingEditor: Objects ungrouped
+deactivate DrawingObject
+DrawingEditor -> DrawingEditor: refresh\ndrawing
+activate DrawingEditor
+DrawingEditor --> Mouse: Drawing refreshed
+deactivate DrawingEditor
+
+@enduml
