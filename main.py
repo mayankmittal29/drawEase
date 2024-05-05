@@ -54,7 +54,52 @@ def parse_drawing_file(file_path):
                     current_group = None
 
     return list_objects, list_of_groups
+def convert_to_xml(input_format):
+    # Create the root element
+    root = ET.Element("xml")
 
+    current_element = root
+    group_stack = []
+
+    for line in input_format.split('\n'):
+        parts = line.split()
+        print('parts',parts)
+        if parts:
+            if parts[0] == 'rect':
+                # Create a rectangle element
+                rect = ET.SubElement(current_element, "rectangle")
+                begin = ET.SubElement(rect, "upper-left")
+                begin.set("x", parts[1])
+                begin.set("y", parts[2])
+                end = ET.SubElement(rect, "lower-right")
+                end.set("x", parts[3])
+                end.set("y", parts[4])
+                rect.set("color", parts[5])
+                rect.set("corner", parts[6])
+
+            elif parts[0] == 'begin':
+                # Push the current element onto the stack
+                group_stack.append(current_element)
+                # Create a group element
+                group = ET.SubElement(current_element, "group")
+                current_element = group
+            elif parts[0] == 'end':
+                # Pop the parent element from the stack
+                current_element = group_stack.pop()
+            elif parts[0] == 'line':
+                # Create a line element
+                line = ET.SubElement(current_element, "line")
+                begin = ET.SubElement(line, "begin")
+                begin.set("x", parts[1])
+                begin.set("y", parts[2])
+                end = ET.SubElement(line, "end")
+                end.set("x", parts[3])
+                end.set("y", parts[4])
+                line.set("color", parts[5])
+
+    # Create the XML tree
+    tree = ET.ElementTree(root)
+    return ET.tostring(tree.getroot(), encoding='unicode', method='xml')
 def draw_rounded_rectangle(canvas, x1, y1, x2, y2, radius, color,**kwargs):
     points = [x1 + radius, y1,
               x1 + radius, y1,
@@ -255,7 +300,10 @@ class Rectangle(DrawingObject):
         if self.x1 >= start_x and self.y1 >= start_y and self.x2 <= x and self.y2 <= y:
             return True
     def get_code(self):
-        return 'rectangle '+ str(self.x1)+' '+ str(self.y1)+' '+ str(self.x2)+' '+ str(self.y2)+' '+ self.color+' '+ self.corner_style+'\n'
+        if self.color == None or self.color=="":
+            # self.color = 'black'
+            return 'rect '+ str(self.x1)+' '+ str(self.y1)+' '+ str(self.x2)+' '+ str(self.y2)+' '+ 'white'+' '+ self.corner_style+'\n'
+        return 'rect '+ str(self.x1)+' '+ str(self.y1)+' '+ str(self.x2)+' '+ str(self.y2)+' '+ self.color+' '+ self.corner_style+'\n'
     def draw_item(self):
         self.id = editor.canvas.create_rectangle(self.x1, self.y1, self.x2, self.y2, outline=self.color)
         if self.corner_style == 'Rounded':
@@ -399,9 +447,22 @@ class DrawingEditor:
         file_menu = tk.Menu(self.menu, tearoff=0)
         file_menu.add_command(label="Open", command=self.open_file)
         file_menu.add_command(label="Save", command=self.save_file)
+        file_menu.add_command(label="Export to XML", command=self.export_to_xml)
         self.menu.add_cascade(label="File", menu=file_menu)
+    def export_to_xml(self):
+        filename = filedialog.asksaveasfilename(defaultextension=".xml", filetypes=[("XML Files", "*.xml")])
+        self.generate_code()
+        print('asciicode',self.asciicode)
         
-    
+        xml_data = convert_to_xml(self.asciicode)
+        print('xml_data',xml_data)
+        print('xml_data',xml_data)
+        if filename:
+            self.save_different_format(filename, xml_data)  
+    def save_different_format(self, filename,data):
+        # self.generate_code()
+        with open(filename, 'w') as file:
+            file.write(data)
     def create_toolbar(self):
         # Create toolbar with drawing tools
         pass
