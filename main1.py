@@ -3,6 +3,8 @@ from tkinter import filedialog
 from tkinter import PhotoImage
 import xml.etree.ElementTree as ET
 from PIL import Image, ImageTk
+from tkinter import messagebox
+from tkinter import colorchooser
 
 CANVAS_WIDTH = 800
 CANVAS_HEIGHT = 800
@@ -13,6 +15,83 @@ first=0
 second=0
 third=0
 fourth=0
+
+
+
+color_option='red'
+corner_option='green'
+
+
+# selected_color='red'
+# selected_corner='square'
+
+
+
+def show_color_dialog():
+    global color_option,corner_option
+    color_dialog = tk.Toplevel(dialog)
+    color_dialog.title("Edit Color")
+    
+    def close_color_dialog(color):
+        # print(color)
+        global color_option
+        # selected_color.set(color)
+        # print(selected_color)
+        color_option=color
+        editor.change_line_color(color_option)
+        color_dialog.destroy()
+    
+    colors = ["Black", "Red", "Green", "Blue"]
+    for color in colors:
+        tk.Button(color_dialog, text=color, command=lambda c=color: close_color_dialog(c)).pack(pady=5)
+
+
+def show_corner_dialog():
+    corner_dialog = tk.Toplevel(dialog)
+    corner_dialog.title("Edit Corner Style")
+    
+    def close_corner_dialog(corner_style):
+        global corner_option
+        selected_corner.set(corner_style)
+        corner_option=corner_style
+        editor.change_corner(corner_style)        
+        corner_dialog.destroy()
+    
+    corner_styles = ["Rounded", "Square"]
+    for style in corner_styles:
+        tk.Button(corner_dialog, text=style, command=lambda s=style: close_corner_dialog(s)).pack(pady=5)
+
+
+def show_edit_dialog_line(obj):
+    global dialog
+    dialog = tk.Toplevel(root)
+    dialog.title("Edit Options")
+    
+    current_color_label = tk.Label(dialog, text="Line Color: " + obj.color)
+    current_color_label.pack(pady=5)
+    
+    
+    
+    tk.Button(dialog, text="Edit Color", command=show_color_dialog).pack(pady=5)
+
+
+
+def show_edit_dialog_rect(obj):
+    global dialog
+    dialog = tk.Toplevel(root)
+    dialog.title("Edit Options")
+    
+    current_color_label = tk.Label(dialog, text="Line Color: " + obj.color)
+    current_color_label.pack(pady=5)
+    
+    current_corner_label = tk.Label(dialog, text="Corner Style: " + obj.corner_style)
+    current_corner_label.pack(pady=5)
+    
+    
+    tk.Button(dialog, text="Edit Color", command=show_color_dialog).pack(pady=5)
+    tk.Button(dialog, text="Edit Corner Style", command=show_corner_dialog).pack(pady=5)
+
+
 
 
 
@@ -41,6 +120,15 @@ def draw_rounded_rectangle(canvas, x1, y1, x2, y2, radius, color,**kwargs):
 
 
 
+
+
+def show_color_options():
+    # Create a color chooser dialog
+    color_choice = colorchooser.askcolor(title="Select Line Color")
+    if color_choice:
+        selected_color = color_choice[1]  # Get the selected color
+        print("Selected color:", selected_color)
+        # Perform further actions with the selected color
 
 
 
@@ -101,10 +189,12 @@ class Line(DrawingObject):
         self.y1 += dy
         self.x2 += dx
         self.y2 += dy
+        
     def edit(self):
         editor.edit_line()
 
     def set_color(self, color):
+        print(color)
         self.color=color
         editor.canvas.itemconfig(self.id,fill=color)
     
@@ -113,6 +203,7 @@ class Line(DrawingObject):
         editor.canvas.itemconfig(self.id, dash=(10, 10))
         self.move_dash()
         pass
+    
     def show_properly(self):
         editor.canvas.itemconfig(self.id, dash=())
         # editor.canvas.itemconfig(self.id, dash=(5, 5))
@@ -165,12 +256,12 @@ class Rectangle(DrawingObject):
         
     def edit(self):
         print("yes,gussing")
-        editor.edit_line()
-        editor.edit_rect_corner()
+        editor.edit_rect()
+        # editor.edit_rect_corner()
 
     def set_color(self, color):
         self.color=color
-        editor.canvas.itemconfig(self.id,fill=color)
+        editor.canvas.itemconfig(self.id,outline=color)
     
     def set_corner(self,corner):
         self.corner_style = corner
@@ -294,8 +385,6 @@ class DrawingEditor:
         self.code = ''
         self.asciicode = ''
         
-        
-        
         # Add toolbar buttons and menu items for drawing operations
         self.create_menu()
         self.create_toolbar()
@@ -396,7 +485,7 @@ class DrawingEditor:
             destroy_button_by_text(self.root, "delete")
             destroy_button_by_text(self.root, "line_edit_button")
             destroy_button_by_text(self.root, "Corner_style_change")
-            
+            destroy_button_by_text(self.root, "Edit")            
             list_of_selected.clear()
             return 
         
@@ -415,26 +504,50 @@ class DrawingEditor:
         self.canvas.button = tk.Button(root, text="delete", command=self.delete)
         self.canvas.button.pack(side=tk.LEFT, padx=10, pady=10)
         
-        
-    
+
+
+
     def edit_line(self):
     # Create a button for selecting line color
-        print("efone")
-        self.color_button = tk.Button(self.root, text="line_edit_button", command=self.show_color_options)
-        self.color_button.pack()
-        
+        # print("efone")
+        global color_option
+        selected_color = tk.StringVar()
+        selected_color.set("")
+
+        our_object=None
+        # selected_corner = tk.StringVar()
+        # selected_corner.set("")
+        global list_of_selected
+        for obj in list_of_selected:
+            if isinstance(obj, Line):
+                our_object=obj
+
+        self.edit_button = tk.Button(root, text="Edit", command=lambda obj=our_object: show_edit_dialog_line(obj))
+        self.edit_button.pack(pady=20)
+        # print(color_option)
+        # self.change_line_color(color_option)
 
 
-    def show_color_options(self):
-        # Create a popup menu for selecting line color
-        self.color_menu = tk.Menu(self.root, tearoff=0)
-        self.color_menu.add_command(label="Black", command=lambda: self.change_line_color("black"))
-        self.color_menu.add_command(label="Red", command=lambda: self.change_line_color("red"))
-        self.color_menu.add_command(label="Green", command=lambda: self.change_line_color("green"))
-        self.color_menu.add_command(label="Blue", command=lambda: self.change_line_color("blue"))
-        
-        # Display the color options menu
-        self.color_menu.post(self.color_button.winfo_rootx(), self.color_button.winfo_rooty() + self.color_button.winfo_height())
+    
+    def edit_rect(self):
+    # Create a button for selecting line color
+        # print("efone")
+        global color_option
+        selected_color = tk.StringVar()
+        selected_color.set("")
+
+        global list_of_selected
+        for obj in list_of_selected:
+            if isinstance(obj, Rectangle):
+                our_object=obj
+
+        self.edit_button = tk.Button(root, text="Edit", command=lambda obj=our_object: show_edit_dialog_rect(obj))
+        self.edit_button.pack(pady=20)
+        # print(color_option)
+        # self.change_line_color(color_option)
+    
+    
+
 
     def change_line_color(self, color):
         # Change the color of the selected line(s)
@@ -444,24 +557,52 @@ class DrawingEditor:
                 obj.set_color(color)
             if isinstance(obj,Rectangle):
                 obj.set_color(color)
+                
+                
+                
+    
+    
+    
+    # def edit_line(self):
+    # # Create a button for selecting line color
+    #     # print("efone")
+    #     self.color_button = tk.Button(self.root, text="Edit", command=show_color_options)
+    #     self.color_button.pack(padx=20, pady=10)
+            
+
+
+    # def show_color_options(self):
+    #     # Create a popup menu for selecting line color
+    #     self.color_menu = tk.Menu(self.root, tearoff=0)
+    #     self.color_menu.add_command(label="Black", command=lambda: self.change_line_color("black"))
+    #     self.color_menu.add_command(label="Red", command=lambda: self.change_line_color("red"))
+    #     self.color_menu.add_command(label="Green", command=lambda: self.change_line_color("green"))
+    #     self.color_menu.add_command(label="Blue", command=lambda: self.change_line_color("blue"))
+        
+    #     # Display the color options menu
+    #     self.color_menu.post(self.color_button.winfo_rootx(), self.color_button.winfo_rooty() + self.color_button.winfo_height())
+
+    # def change_line_color(self, color):
+    #     # Change the color of the selected line(s)
+    #     global list_of_selected
+    #     for obj in list_of_selected:
+    #         if isinstance(obj, Line):
+    #             obj.set_color(color)
+    #         if isinstance(obj,Rectangle):
+    #             obj.set_color(color)
+
+    
+    
 
         # Redraw the canvas to reflect the color changes
         # self.redraw_canvas()
+
+    
+    # def edit_rect_corner(self):
+    #     self.corner_button = tk.Button(self.root, text="Corner_style_change", command=self.show_corner_options)
+    #     self.corner_button.pack()
     
     
-    def edit_rect_corner(self):
-        self.corner_button = tk.Button(self.root, text="Corner_style_change", command=self.show_corner_options)
-        self.corner_button.pack()
-    
-    
-    def show_corner_options(self):
-        # Create a popup menu for selecting line color
-        self.corner_menu = tk.Menu(self.root, tearoff=0)
-        self.corner_menu.add_command(label="Square", command=lambda: self.change_corner("Square"))
-        self.corner_menu.add_command(label="Rounded", command=lambda: self.change_corner("Rounded"))
-        
-        # Display the color options menu
-        self.corner_menu.post(self.corner_button.winfo_rootx(), self.corner_button.winfo_rooty() + self.corner_button.winfo_height())
     
     
     def change_corner(self, corner):
@@ -475,11 +616,13 @@ class DrawingEditor:
                     self.canvas.delete(obj.id)
                     # self.canvas.create_rectangle(obj.x1, obj.y1, obj.x2, obj.y2, outline="grey")
                     obj.id=draw_rounded_rectangle(editor.canvas, obj.x1, obj.y1, obj.x2, obj.y2, 20,obj.color ,outline='black', width=1)
+                    obj.corner_style='Rounded'
                     obj.show_on_select()
                     
                 else:
                     self.canvas.delete(obj.id)
                     obj.id=self.canvas.create_rectangle(obj.x1, obj.y1, obj.x2, obj.y2, outline="grey",fill=obj.color)
+                    obj.corner_style='Square'
                     obj.show_on_select()
                     # self.canvas.delete(first)
                     # self.canvas.delete(second)
@@ -492,14 +635,13 @@ class DrawingEditor:
                 # self.redraw_canvas()
     
         
-        
-
     def ungroup(self):
         for obj in list_of_selected:
             if isinstance(obj,Group):
                 # list_of_groups.append(obj)
                 obj.ungroup()
                 list_of_groups.__delitem__(list_of_groups.index(obj))
+                
     def delete(self):
         for obj in list_of_selected:
             obj.delete()
@@ -603,7 +745,7 @@ def end_rectangle(event):
             editor.canvas.delete(current_rectangle)
             
             return
-        list_of_objects.append(Rectangle(start_x, start_y, x, y, "", "sharp", id=current_rectangle))
+        list_of_objects.append(Rectangle(start_x, start_y, x, y, "Black", "sharp", id=current_rectangle))
 def start_line(event):
     global start_x, start_y, current_line
     start_x, start_y = event.x, event.y
@@ -625,6 +767,24 @@ def end_line(event):
 root = tk.Tk()
 root.title("Drawing Editor")
 editor = DrawingEditor(root)
+
+selected_color = tk.StringVar()
+selected_color.set("")
+
+selected_corner = tk.StringVar()
+selected_corner.set("")
+
+
+# tk.Label(root, text="Selected Color:").pack()
+# tk.Label(root, textvariable=selected_color).pack()
+
+# tk.Label(root, text="Selected Corner Style:").pack()
+# tk.Label(root, textvariable=selected_corner).pack()
+
+# edit_button = tk.Button(root, text="Edit", command=show_edit_dialog)
+# edit_button.pack(pady=20)
+# app= App()
+# app.mainloop()
 root.mainloop()
 
 
