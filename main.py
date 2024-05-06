@@ -23,6 +23,96 @@ corner_option='green'
 filename = ""
 unsaved = 0 
 
+
+
+
+
+
+
+class XML_ADAPTEE:
+    
+    def export_to_xml(self, editor,xml_data):
+        filename = filedialog.asksaveasfilename(defaultextension=".xml", filetypes=[("XML Files", "*.xml")])
+        editor.generate_code()
+        print('asciicode', editor.asciicode)
+        
+        # xml_data = convert_to_xml(editor.asciicode)
+        print('xml_data', xml_data)
+        print('xml_data', xml_data)
+        if filename:
+            self.save_different_format(filename, xml_data)
+    
+    def save_different_format(self, filename, data):
+        with open(filename, 'w') as file:
+            file.write(data)
+
+
+
+xml_adaptee = XML_ADAPTEE()
+
+
+
+
+class XMLAdapter:
+    @staticmethod
+    def convert_to_xml(input_format):
+        # Create the root element
+        editor.generate_code()
+        input_format = editor.asciicode
+        root = ET.Element("xml")
+
+        current_element = root
+        group_stack = []
+
+        for line in input_format.split('\n'):
+            parts = line.split()
+            if parts:
+                if parts[0] == 'rect':
+                    # Create a rectangle element
+                    rect = ET.SubElement(current_element, "rectangle")
+                    begin = ET.SubElement(rect, "upper-left")
+                    begin.set("x", parts[1])
+                    begin.set("y", parts[2])
+                    end = ET.SubElement(rect, "lower-right")
+                    end.set("x", parts[3])
+                    end.set("y", parts[4])
+                    rect.set("color", parts[5])
+                    rect.set("corner", parts[6])
+
+                elif parts[0] == 'begin':
+                    # Push the current element onto the stack
+                    group_stack.append(current_element)
+                    # Create a group element
+                    group = ET.SubElement(current_element, "group")
+                    current_element = group
+                elif parts[0] == 'end':
+                    # Pop the parent element from the stack
+                    current_element = group_stack.pop()
+                elif parts[0] == 'line':
+                    # Create a line element
+                    line = ET.SubElement(current_element, "line")
+                    begin = ET.SubElement(line, "begin")
+                    begin.set("x", parts[1])
+                    begin.set("y", parts[2])
+                    end = ET.SubElement(line, "end")
+                    end.set("x", parts[3])
+                    end.set("y", parts[4])
+                    line.set("color", parts[5])
+        # Create the XML tree
+        tree = ET.ElementTree(root)
+        xml_data=ET.tostring(tree.getroot(), encoding='unicode', method='xml')
+        xml_adaptee.export_to_xml(editor,xml_data)
+        # return ET.tostring(tree.getroot(), encoding='unicode', method='xml')
+
+        
+
+xml_adapter = XMLAdapter()
+
+
+
+
+
+
 def show_color_dialog():
     global color_option,corner_option
     color_dialog = tk.Toplevel(dialog)
@@ -31,11 +121,13 @@ def show_color_dialog():
     def close_color_dialog(color):
         # print(color)
         global color_option
+        global unsaved
         # selected_color.set(color)
         # print(selected_color)
         color_option=color
         editor.change_line_color(color_option)
         color_dialog.destroy()
+        unsaved = 1 
     
     colors = ["Black", "Red", "Green", "Blue"]
     for color in colors:
@@ -45,13 +137,14 @@ def show_color_dialog():
 def show_corner_dialog():
     corner_dialog = tk.Toplevel(dialog)
     corner_dialog.title("Edit Corner Style")
-    
     def close_corner_dialog(corner_style):
+        global unsaved
         global corner_option
         # selected_corner.set(corner_style)
         corner_option=corner_style
         editor.change_corner(corner_style)        
         corner_dialog.destroy()
+        unsaved = 1 
     
     corner_styles = ["Rounded", "Square"]
     for style in corner_styles:
@@ -561,22 +654,22 @@ class DrawingEditor:
         file_menu = tk.Menu(self.menu, tearoff=0)
         file_menu.add_command(label="Open", command=self.open_file)
         file_menu.add_command(label="Save", command=self.save_file)
-        file_menu.add_command(label="Export to XML", command=self.export_to_xml)
+        file_menu.add_command(label="Export to XML", command=lambda: xml_adapter.convert_to_xml(self.asciicode))
         self.menu.add_cascade(label="File", menu=file_menu)
-    def export_to_xml(self):
-        filename = filedialog.asksaveasfilename(defaultextension=".xml", filetypes=[("XML Files", "*.xml")])
-        self.generate_code()
-        print('asciicode',self.asciicode)
+    # def export_to_xml(self):
+    #     filename = filedialog.asksaveasfilename(defaultextension=".xml", filetypes=[("XML Files", "*.xml")])
+    #     self.generate_code()
+    #     print('asciicode',self.asciicode)
         
-        xml_data = convert_to_xml(self.asciicode)
-        print('xml_data',xml_data)
-        print('xml_data',xml_data)
-        if filename:
-            self.save_different_format(filename, xml_data)  
-    def save_different_format(self, filename,data):
-        # self.generate_code()
-        with open(filename, 'w') as file:
-            file.write(data)
+    #     xml_data = convert_to_xml(self.asciicode)
+    #     print('xml_data',xml_data)
+    #     print('xml_data',xml_data)
+    #     if filename:
+    #         self.save_different_format(filename, xml_data)  
+    # def save_different_format(self, filename,data):
+    #     # self.generate_code()
+    #     with open(filename, 'w') as file:
+    #         file.write(data)
     def create_toolbar(self):
         # Create toolbar with drawing tools
         pass
@@ -589,9 +682,11 @@ class DrawingEditor:
         self.canvas.bind("<B1-Motion>", draw_rectangle)
         self.canvas.bind("<ButtonRelease-1>", end_rectangle)
     def open_file(self):
+        global filename
         filename = filedialog.askopenfilename(filetypes=[("Drawing Files", "*.txt")])
         if filename:
             self.load_drawing(filename)
+        root.title(filename.split('/')[-1])
     
     def save_file(self):
         global filename
@@ -959,6 +1054,8 @@ if filename!="":
 root.protocol("WM_DELETE_WINDOW", on_closing)
 
 root.mainloop()
+
+# xml_data = xml_adapter.convert_to_xml(input_format)
 
 
 

@@ -5,3 +5,11 @@ begin
 line 112 156 402 276 black
 line 266 429 407 80 black
 end
+begin
+rect 48 554 102 598 Black sharp
+rect 129 551 175 601 Black sharp
+end
+begin
+rect 418 667 466 702 Black sharp
+rect 494 660 562 706 Black sharp
+end
