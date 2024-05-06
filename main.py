@@ -6,8 +6,8 @@ from PIL import Image, ImageTk
 from tkinter import messagebox
 import os 
 import sys
-CANVAS_WIDTH = 800
-CANVAS_HEIGHT = 800
+CANVAS_WIDTH = 400
+CANVAS_HEIGHT = 400
 list_of_objects = []
 list_of_groups = []
 list_of_selected = []
@@ -293,7 +293,7 @@ def draw_rounded_rectangle(canvas, x1, y1, x2, y2, radius, color,**kwargs):
               x1, y1 + radius,
               x1, y1 + radius,
               x1, y1]
-    return canvas.create_polygon(points,fill="white",outline=color,width=kwargs.get('width', 1), smooth=True)
+    return canvas.create_polygon(points,fill="white",outline=color,width=kwargs.get('width', 2), smooth=True)
 
 
 
@@ -399,11 +399,11 @@ class Line(DrawingObject):
     def get_code(self):
         return 'line '+ str(self.x1)+' '+ str(self.y1)+' '+ str(self.x2)+' '+ str(self.y2)+' '+ self.color+'\n'
     def draw_item(self):
-        self.id = editor.canvas.create_line(self.x1, self.y1, self.x2, self.y2, fill=self.color)
+        self.id = editor.canvas.create_line(self.x1, self.y1, self.x2, self.y2, fill=self.color,width=2)
         
         
     def copy(self):
-        new_id = editor.canvas.create_line(self.x1+40, self.y1+40, self.x2+40, self.y2+40, fill=self.color)
+        new_id = editor.canvas.create_line(self.x1+40, self.y1+40, self.x2+40, self.y2+40, fill=self.color,width=2)
         obj = Line(self.x1+40, self.y1+40, self.x2+40, self.y2+40, self.color, id=new_id)
       # list_of_copied.append(obj)
         return obj 
@@ -818,9 +818,8 @@ class DrawingEditor:
         for obj in list_of_selected:
             if isinstance(obj, Line):
                 our_object=obj
-
         self.edit_button = tk.Button(root, text="Edit", command=lambda obj=our_object: show_edit_dialog_line(obj))
-        self.edit_button.pack(pady=20)
+        self.edit_button.pack(side=tk.LEFT, padx=10, pady=10)
         # print(color_option)
         # self.change_line_color(color_option)
     
@@ -838,7 +837,7 @@ class DrawingEditor:
                 our_object=obj
 
         self.edit_button = tk.Button(root, text="Edit", command=lambda obj=our_object: show_edit_dialog_rect(obj))
-        self.edit_button.pack(pady=20)
+        self.edit_button.pack(side=tk.LEFT, padx=10, pady=10)
         # print(color_option)
         # self.change_line_color(color_option)
         
@@ -868,13 +867,13 @@ class DrawingEditor:
                 if corner=="Rounded":
                     self.canvas.delete(obj.id)
                     # self.canvas.create_rectangle(obj.x1, obj.y1, obj.x2, obj.y2, outline="grey")
-                    obj.id=draw_rounded_rectangle(editor.canvas, obj.x1, obj.y1, obj.x2, obj.y2, 20,obj.color, width=1)
+                    obj.id=draw_rounded_rectangle(editor.canvas, obj.x1, obj.y1, obj.x2, obj.y2, 20,obj.color, width=2)
                     obj.corner_style='Rounded'
                     obj.show_on_select()
                     
                 else:
                     self.canvas.delete(obj.id)
-                    obj.id=self.canvas.create_rectangle(obj.x1, obj.y1, obj.x2, obj.y2,outline=obj.color, width=1)
+                    obj.id=self.canvas.create_rectangle(obj.x1, obj.y1, obj.x2, obj.y2,outline=obj.color, width=2)
                     obj.corner_style='Square'
                     obj.show_on_select()
                     # self.canvas.delete(first)
@@ -975,9 +974,9 @@ def start_rectangle(event):
     global start_x, start_y, current_rectangle
     start_x, start_y = event.x, event.y
     if choice == 'select':
-        current_rectangle = editor.canvas.create_rectangle(start_x, start_y, start_x, start_y, outline="grey", dash=(5, 5))
+        current_rectangle = editor.canvas.create_rectangle(start_x, start_y, start_x, start_y, outline="black", dash=(5, 5))
     else:
-        current_rectangle = editor.canvas.create_rectangle(start_x, start_y, start_x, start_y, outline="grey",width=2)
+        current_rectangle = editor.canvas.create_rectangle(start_x, start_y, start_x, start_y, outline="black",width=2)
 
         
 def draw_rectangle(event):
@@ -1016,7 +1015,7 @@ def end_rectangle(event):
 def start_line(event):
     global start_x, start_y, current_line
     start_x, start_y = event.x, event.y
-    current_line = editor.canvas.create_line(start_x, start_y, start_x, start_y, tags="line")
+    current_line = editor.canvas.create_line(start_x, start_y, start_x, start_y, tags="line",width=2)
 
 def draw_line(event):
     if current_line:
@@ -1051,6 +1050,9 @@ editor = DrawingEditor(root)
 if filename!="":
     root.title(filename)
     editor.load_drawing(filename)
+else:
+    root.title("Untitled Document")
+    
 root.protocol("WM_DELETE_WINDOW", on_closing)
 
 root.mainloop()
