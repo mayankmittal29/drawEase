@@ -1,2 +1,5 @@
 rect 155 339 376 508 Black sharp
 line 199 624 413 239 black
+rect 438 543 572 632 Blue Rounded
+rect 55 165 154 219 Black sharp
+rect 194 127 293 181 Black sharp

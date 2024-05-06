@@ -48,7 +48,7 @@ def show_corner_dialog():
     
     def close_corner_dialog(corner_style):
         global corner_option
-        selected_corner.set(corner_style)
+        # selected_corner.set(corner_style)
         corner_option=corner_style
         editor.change_corner(corner_style)        
         corner_dialog.destroy()
@@ -200,7 +200,7 @@ def draw_rounded_rectangle(canvas, x1, y1, x2, y2, radius, color,**kwargs):
               x1, y1 + radius,
               x1, y1 + radius,
               x1, y1]
-    return canvas.create_polygon(points, outline=kwargs.get('outline', 'black'), width=kwargs.get('width', 1), smooth=True,fill=color)
+    return canvas.create_polygon(points,fill="white",outline=color,width=kwargs.get('width', 1), smooth=True)
 
 
 
@@ -300,7 +300,7 @@ class Line(DrawingObject):
         if self.dash_offset >= 10:
             self.dash_offset = 0
         editor.canvas.after(50, self.move_dash)
-    def check_in_area(self,start_x,start_y, x, y,):
+    def check_in_area(self,start_x,start_y, x, y):
         if self.x1 >= start_x and self.y1 >= start_y and self.x2 <= x and self.y2 <= y:
             return True
     def get_code(self):
@@ -334,11 +334,37 @@ class Rectangle(DrawingObject):
         # Check if (x, y) is inside the rectangle
         pass
     def move(self, dx, dy):
-        editor.canvas.coords(self.id, self.x1 + dx, self.y1 + dy, self.x2 + dx, self.y2 + dy)
-        self.x1 += dx
-        self.y1 += dy
-        self.x2 += dx
-        self.y2 += dy
+        if self.corner_style=='Rounded':
+            editor.canvas.coords(self.id, self.x1 + 20, self.y1,
+                                       self.x1 + 20, self.y1,
+                                       self.x2 - 20, self.y1,
+                                       self.x2 - 20, self.y1,
+                                       self.x2, self.y1,
+                                       self.x2, self.y1 + 20,
+                                       self.x2, self.y1 + 20,
+                                       self.x2, self.y2 - 20,
+                                       self.x2, self.y2 - 20,
+                                       self.x2, self.y2,
+                                       self.x2 - 20, self.y2,
+                                       self.x2 - 20, self.y2,
+                                       self.x1 + 20, self.y2,
+                                       self.x1 + 20, self.y2,
+                                       self.x1, self.y2,
+                                       self.x1, self.y2 - 20,
+                                       self.x1, self.y2 - 20,
+                                       self.x1, self.y1 + 20,
+                                       self.x1, self.y1 + 20,
+                                       self.x1, self.y1)
+            self.x1 += dx
+            self.y1 += dy
+            self.x2 += dx
+            self.y2 += dy
+        else:
+            editor.canvas.coords(self.id, self.x1 + dx, self.y1 + dy, self.x2 + dx, self.y2 + dy)
+            self.x1 += dx
+            self.y1 += dy
+            self.x2 += dx
+            self.y2 += dy
         
     def edit(self):
         print("yes,gussing")
@@ -354,7 +380,7 @@ class Rectangle(DrawingObject):
         # Delete the existing rectangle
         editor.canvas.delete(self.id)
         # Create a new rectangle with updated corner style
-        self.id = draw_rounded_rectangle(editor.canvas, 100, 100, 200, 200, 20, fill="blue", outline="")
+        self.id = draw_rounded_rectangle(editor.canvas, 100, 100, 200, 200, 20, fill="white", outline=self.color)
 
     def show_on_select(self):
         editor.canvas.itemconfig(self.id, dash=(10, 10))
@@ -387,12 +413,18 @@ class Rectangle(DrawingObject):
             return 'rect '+ str(self.x1)+' '+ str(self.y1)+' '+ str(self.x2)+' '+ str(self.y2)+' '+ 'white'+' '+ self.corner_style+'\n'
         return 'rect '+ str(self.x1)+' '+ str(self.y1)+' '+ str(self.x2)+' '+ str(self.y2)+' '+ self.color+' '+ self.corner_style+'\n'
     def draw_item(self):
-        self.id = editor.canvas.create_rectangle(self.x1, self.y1, self.x2, self.y2, outline=self.color)
         if self.corner_style == 'Rounded':
-            self.id = draw_rounded_rectangle(editor.canvas, self.x1, self.y1, self.x2, self.y2, 20, fill=self.color, outline="")
+            self.id = draw_rounded_rectangle(editor.canvas, self.x1, self.y1, self.x2, self.y2, 20,self.color)
+        else:
+            self.id = editor.canvas.create_rectangle(self.x1, self.y1, self.x2, self.y2, outline=self.color)
         pass
     def copy(self):
-        new_id = editor.canvas.create_rectangle(self.x1+40, self.y1+40, self.x2+40, self.y2+40, outline='black')
+        new_id = 1 
+        if self.corner_style=='Rounded':
+            new_id = draw_rounded_rectangle(editor.canvas,self.x1+40,self.y1+40,self.x2+40,self.y2+40,20,self.color)
+        else:
+            new_id = editor.canvas.create_rectangle(self.x1+40, self.y1+40, self.x2+40, self.y2+40, outline='black')
+            
         print('new_id',new_id)
         obj = Rectangle(self.x1+40, self.y1+40, self.x2+40, self.y2+40, self.color, self.corner_style, id=new_id)
 
@@ -741,13 +773,13 @@ class DrawingEditor:
                 if corner=="Rounded":
                     self.canvas.delete(obj.id)
                     # self.canvas.create_rectangle(obj.x1, obj.y1, obj.x2, obj.y2, outline="grey")
-                    obj.id=draw_rounded_rectangle(editor.canvas, obj.x1, obj.y1, obj.x2, obj.y2, 20,obj.color ,outline='black', width=1)
+                    obj.id=draw_rounded_rectangle(editor.canvas, obj.x1, obj.y1, obj.x2, obj.y2, 20,obj.color, width=1)
                     obj.corner_style='Rounded'
                     obj.show_on_select()
                     
                 else:
                     self.canvas.delete(obj.id)
-                    obj.id=self.canvas.create_rectangle(obj.x1, obj.y1, obj.x2, obj.y2, outline="grey",fill=obj.color)
+                    obj.id=self.canvas.create_rectangle(obj.x1, obj.y1, obj.x2, obj.y2,outline=obj.color, width=1)
                     obj.corner_style='Square'
                     obj.show_on_select()
                     # self.canvas.delete(first)
