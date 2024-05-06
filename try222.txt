@@ -1,0 +1,4 @@
+begin
+rect 352 69 487 331 Black sharp
+rect 148 269 604 533 Black sharp
+end

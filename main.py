@@ -3,7 +3,9 @@ from tkinter import filedialog
 from tkinter import PhotoImage
 import xml.etree.ElementTree as ET
 from PIL import Image, ImageTk
-
+from tkinter import messagebox
+import os 
+import sys
 CANVAS_WIDTH = 800
 CANVAS_HEIGHT = 800
 list_of_objects = []
@@ -18,6 +20,8 @@ list_of_copied = []
 
 color_option='red'
 corner_option='green'
+filename = ""
+unsaved = 0 
 
 def show_color_dialog():
     global color_option,corner_option
@@ -91,9 +95,12 @@ def parse_drawing_file(file_path):
     list_of_groups = []
     current_group = None
     group_stack = []
+    # print("yes goind into parse_drawing _file")
+    with open(file_path, 'a+') as file:
+        file.seek(0)
 
-    with open(file_path, 'r') as file:
         for line in file:
+            print(line)
             parts = line.split()
             if parts[0] == 'line':
                 # Create a Line object
@@ -555,9 +562,17 @@ class DrawingEditor:
             self.load_drawing(filename)
     
     def save_file(self):
-        filename = filedialog.asksaveasfilename(defaultextension=".txt", filetypes=[("Drawing Files", "*.txt")])
-        if filename:
+        global filename
+        global unsaved
+        if filename=="":
+            filename1 = filedialog.asksaveasfilename(defaultextension=".txt", filetypes=[("Drawing Files", "*.txt")])
+            if filename1:
+                self.save_drawing(filename1)
+            filename = filename1
+            root.title(filename.split('/')[-1])
+        else:
             self.save_drawing(filename)
+        unsaved = 0
     
     def load_drawing(self, filename):
         global list_of_objects, list_of_groups
@@ -576,7 +591,7 @@ class DrawingEditor:
         for group in list_of_groups:
             group.draw_item()
     def copy(self):
-        global list_of_selected
+        global list_of_selected, list_of_objects,list_of_groups,unsaved
         for obj in list_of_selected:
             # obj.copy()
             new_obj = obj.copy()
@@ -587,6 +602,7 @@ class DrawingEditor:
                 # new_obj  = 
                 list_of_objects.append(new_obj)
                 list_of_copied.append(new_obj)
+            
         
         for obj in list_of_selected:
             obj.show_properly()
@@ -594,6 +610,7 @@ class DrawingEditor:
         for obj in list_of_copied:
             list_of_selected.append(obj)
         for obj in list_of_selected:
+            unsaved = 1 
             obj.show_on_select()
         list_of_copied.clear()
         
@@ -623,7 +640,7 @@ class DrawingEditor:
     def select_object(self):
         global choice
         global list_of_selected
-
+        # global unsaved
         # Deselect the currently selected object
         if self.selected_object:
             for obj in list_of_selected:
@@ -747,12 +764,16 @@ class DrawingEditor:
          
 
     def ungroup(self):
+        global list_of_groups, unsaved,list_of_selected
         for obj in list_of_selected:
             if isinstance(obj,Group):
                 # list_of_groups.append(obj)
                 obj.ungroup()
                 list_of_groups.__delitem__(list_of_groups.index(obj))
+                
+        unsaved = 1 
     def delete(self):
+        global unsaved, list_of_groups,list_of_objects
         for obj in list_of_selected:
             obj.delete()
            
@@ -760,13 +781,16 @@ class DrawingEditor:
                 list_of_groups.__delitem__(list_of_groups.index(obj))
             else:
                 list_of_objects.__delitem__(list_of_objects.index(obj))
+            unsaved = 1 
         list_of_selected.clear()
     def ungroupall(self):
         # global list_of_groups
+        global list_of_groups,list_of_selected,unsaved
         for group in list_of_selected:
             if isinstance(group,Group):
                 group.ungroupall()
                 list_of_groups.__delitem__(list_of_groups.index(group))
+            unsaved = 1 
     def move_object(self):
         self.canvas.bind("<Button-1>",  self.start_move)
         self.canvas.bind("<B1-Motion>", self.move_object1)
@@ -778,25 +802,29 @@ class DrawingEditor:
     def move_object1(self, event):
         global start_x, start_y
         global list_of_selected
-        
+        global unsaved
         x, y = event.x, event.y
         dx, dy = x - start_x, y - start_y
         for obj in list_of_selected:
-            print('on time of moving check ', obj)
+            # print('on time of moving check ', obj)
             obj.move(dx, dy)
-        for obj in list_of_groups:
-            print('object', obj)
+        # for obj in list_of_groups:
+        #     print('object', obj)
             # obj.move(dx, dy)
+        unsaved = 1 
         start_x, start_y = x, y
     def end_move1(self, event):
         global choice
+        global unsaved
         self.canvas.unbind("<Button-1>")
         self.canvas.unbind("<B1-Motion>")
         self.canvas.unbind("<ButtonRelease-1>")
         choice = 'draw'
+        unsaved = 1 
         pass
     def remove_rectangle(self):
         # self.canvas.bind("<Button-1>", remove_rectangle)
+        global unsaved
         new_group = Group()
         global list_of_selected
         global list_of_groups
@@ -807,7 +835,7 @@ class DrawingEditor:
             else:
                 list_of_objects.__delitem__(list_of_objects.index(obj))
             new_group.add_object(obj)
-            
+        unsaved = 1 
         list_of_groups.append(new_group)
     def redraw_canvas(self):
         self.canvas.delete("all")
@@ -832,6 +860,7 @@ def draw_rectangle(event):
     # print(start_x, start_y, x, y)
 def end_rectangle(event):
     global start_x, start_y, current_rectangle, choice, list_of_selected
+    global unsaved
     
     if current_rectangle:
         x, y = event.x, event.y
@@ -856,6 +885,7 @@ def end_rectangle(event):
             
             return
         list_of_objects.append(Rectangle(start_x, start_y, x, y, "Black", "sharp", id=current_rectangle))
+    unsaved =1 
 def start_line(event):
     global start_x, start_y, current_line
     start_x, start_y = event.x, event.y
@@ -867,16 +897,35 @@ def draw_line(event):
         editor.canvas.coords(current_line, start_x, start_y, x, y)
 def end_line(event):
     global start_x, start_y, current_line
+    global unsaved
     if current_line:
         x, y = event.x, event.y
         editor.canvas.coords(current_line, start_x, start_y, x, y)
         list_of_objects.append(Line(start_x, start_y, x, y, "black", id=current_line))
-        
-
+    unsaved =1 
+if len(sys.argv)>=2:
+    filename = sys.argv[1]
 # Example usage
+def on_closing():
+    global unsaved
+    if unsaved==0:
+        root.destroy()
+    else:
+        if messagebox.askokcancel("Quit", "You have unsaved changes. Do you want to save it ?"):
+            if filename:
+                editor.save_drawing(filename)
+            else:
+                editor.save_file()
+            
+        root.destroy()
 root = tk.Tk()
-root.title("Drawing Editor")
+
 editor = DrawingEditor(root)
+if filename!="":
+    root.title(filename)
+    editor.load_drawing(filename)
+root.protocol("WM_DELETE_WINDOW", on_closing)
+
 root.mainloop()
 
 

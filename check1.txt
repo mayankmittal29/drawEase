@@ -1,8 +1,6 @@
 line 202 44 162 322 black
 line 491 601 137 708 black
-rectangle 126 413 287 575  sharp
-rectangle 431 345 652 591  sharp
-rectangle 64 378 353 630  sharp
+rect 353 389 650 517 Black sharp
 begin
 line 112 156 402 276 black
 line 266 429 407 80 black
