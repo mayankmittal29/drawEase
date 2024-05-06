@@ -2,26 +2,117 @@
 
 participant Mouse
 participant DrawingEditor
-participant Group
 participant DrawingObject
+participant Rectangle
+participant Line
+participant Group
 
-Mouse -> DrawingEditor: Mouse selection\nof element in group
+activate Mouse
+Mouse -> DrawingEditor: Select button is clicked
+deactivate Mouse
+
 activate DrawingEditor
-DrawingEditor -> Group: is_clicked(x,y)
-activate Group
-Group --> DrawingEditor: Object clicked
-deactivate Group
-DrawingEditor -> DrawingObject: show_on_select()
+DrawingEditor -> Rectangle: rectangle for selection is created
+
+activate Rectangle
+Rectangle --> DrawingEditor: Selected rectangle is created
+deactivate Rectangle
+
 activate DrawingObject
+DrawingEditor -> DrawingObject: Check if the object is in selected area
+
+activate Rectangle
+DrawingObject-> Rectangle: Check if the object is in selected area
+Rectangle --> DrawingObject: Boolean value
+deactivate Rectangle
+
+
+activate Line
+DrawingObject-> Line: Check if the object is in selected area
+Line --> DrawingObject: Boolean value
+deactivate Line
+
+activate Group
+DrawingObject-> Group: Check if the object is in selected area
+
+
+activate Rectangle
+Group-> Rectangle: Check if the object is in selected area
+Rectangle --> Group: Boolean value
+deactivate Rectangle
+
+
+activate Line
+Group-> Line: Check if the object is in selected area
+Line --> Group: Boolean value
+deactivate Line
+
+
+
+Group --> DrawingObject: Boolean value
+deactivate Group
+
+
 DrawingObject --> DrawingEditor: Object selected
 deactivate DrawingObject
-DrawingEditor -> DrawingObject: ungroupall()
+
+DrawingEditor --> Mouse: List of selected objects
+activate Mouse
+Mouse -> DrawingEditor: Move button is clicked
+deactivate Mouse
+DrawingEditor -> DrawingObject: ungroup
+
 activate DrawingObject
-DrawingObject --> DrawingEditor: Objects ungrouped
+activate Rectangle
+DrawingObject-> Rectangle: ungroup
+Rectangle --> DrawingObject: ungrouped 
+deactivate Rectangle
+
+
+activate Line
+DrawingObject-> Line: ungroup
+Line --> DrawingObject: ungrouped 
+deactivate Line
+
+activate Group
+DrawingObject-> Group: ungroup
+
+
+activate Rectangle
+Group-> Rectangle: ungroup
+Rectangle --> Group: ungrouped 
+deactivate Rectangle
+
+
+activate Line
+Group-> Line: ungroup
+Line --> Group: ungrouped 
+deactivate Line
+
+Group --> DrawingObject: ungrouped  all objects
+deactivate Group
+DrawingObject --> DrawingEditor: All Objects moved
 deactivate DrawingObject
-DrawingEditor -> DrawingEditor: refresh\ndrawing
-activate DrawingEditor
+activate Mouse
 DrawingEditor --> Mouse: Drawing refreshed
+deactivate Mouse
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 deactivate DrawingEditor
 
 @enduml

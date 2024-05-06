@@ -2,30 +2,101 @@
 
 participant Mouse
 participant DrawingEditor
-participant Group
 participant DrawingObject
+participant Rectangle
+participant Line
+participant Group
 
-Mouse -> DrawingEditor: Mouse selection\nof element in group
+activate Mouse
+Mouse -> DrawingEditor: Select button is clicked
+deactivate Mouse
+
 activate DrawingEditor
-DrawingEditor -> Group: is_clicked(x,y)
-activate Group
-Group --> DrawingEditor: Object clicked
-deactivate Group
-DrawingEditor -> DrawingObject: show_on_select()
+DrawingEditor -> Rectangle: rectangle for selection is created
+
+activate Rectangle
+Rectangle --> DrawingEditor: Selected rectangle is created
+deactivate Rectangle
+
 activate DrawingObject
+DrawingEditor -> DrawingObject: Check if the object is in selected area
+
+activate Rectangle
+DrawingObject-> Rectangle: Check if the object is in selected area
+Rectangle --> DrawingObject: Boolean value
+deactivate Rectangle
+
+
+activate Line
+DrawingObject-> Line: Check if the object is in selected area
+Line --> DrawingObject: Boolean value
+deactivate Line
+
+activate Group
+DrawingObject-> Group: Check if the object is in selected area
+
+
+activate Rectangle
+Group-> Rectangle: Check if the object is in selected area
+Rectangle --> Group: Boolean value
+deactivate Rectangle
+
+
+activate Line
+Group-> Line: Check if the object is in selected area
+Line --> Group: Boolean value
+deactivate Line
+
+
+
+Group --> DrawingObject: Boolean value
+deactivate Group
+
+
 DrawingObject --> DrawingEditor: Object selected
 deactivate DrawingObject
-DrawingEditor -> Mouse: Drag to\nnew position
+
+DrawingEditor --> Mouse: List of selected objects
 activate Mouse
-Mouse --> DrawingEditor: New position
+Mouse -> DrawingEditor: Move button is clicked
 deactivate Mouse
 DrawingEditor -> DrawingObject: move(dx,dy)
+
 activate DrawingObject
-DrawingObject --> DrawingEditor: Object moved
+activate Rectangle
+DrawingObject-> Rectangle: move(dx,dy)
+Rectangle --> DrawingObject: moved to the new position
+deactivate Rectangle
+
+
+activate Line
+DrawingObject-> Line: move(dx,dy)
+Line --> DrawingObject: moved to the new position
+deactivate Line
+
+activate Group
+DrawingObject-> Group: move(dx,dy)
+
+
+activate Rectangle
+Group-> Rectangle: move(dx,dy)
+Rectangle --> Group: moved to the new position
+deactivate Rectangle
+
+
+activate Line
+Group-> Line: move(dx,dy)
+Line --> Group: moved to the new position
+deactivate Line
+
+Group --> DrawingObject: moved to the new position
+deactivate Group
+DrawingObject --> DrawingEditor: All Objects moved
 deactivate DrawingObject
-DrawingEditor -> DrawingEditor: refresh\ndrawing
-activate DrawingEditor
+DrawingEditor -> DrawingEditor: refresh drawing
+activate Mouse
 DrawingEditor --> Mouse: Drawing refreshed
+deactivate Mousez
 deactivate DrawingEditor
 
 @enduml

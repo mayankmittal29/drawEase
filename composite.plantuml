@@ -82,61 +82,9 @@ class DrawingObject{
     + copy():
 }
 
-class DrawingEditor{
-    + selected_objects:bool
-    + asciicode:String
-    + canvas:canvas
-    + create_menu():void
-    + create_toolbar():void
-    + create_line():void
-    + create_rectangle():void
-    + open_file():void
-    + save_file():void
-    + load_drawing(filename):void
-    + copy():void
-    + generate_code():void
-    + save_drawing(filename):void
-    + on_click(event):void
-    + select_object():void
-    + edit_line():void
-    + show_color_options():void
-    + change_line_color(color):void
-    + edit_rect_corner():void
-    + show_corner_options():void
-    + change_corner(corner):void
-    + ungroup():void
-    + delete():void
-    + ungroupall():void
-    + move_object():void
-    + start_move(event):void
-    + move_object1(event):void
-    + end_move1(event):void
-    + remove_rectangle():void
-    + redraw_canvas():void
-}
-
-
-class XML_ADAPTEE{
-    export_to_xml(editor,xml_data):void   
-    save_different_format(filename, data):void
-}
-
-
-
-class XMLAdapter{
-    convert_to_xml(input_format):void
-}
-   
-
 Group "1" *-- "0..*" DrawingObject : has
 DrawingObject <|-- Line
 DrawingObject <|-- Rectangle
 DrawingObject <|-- Group
-DrawingEditor "1" -- "0.." Line: contains 
-DrawingEditor "1" -- "0.." Rectangle: contains 
-DrawingEditor "1" -- "0.." DrawingObject: contains 
-DrawingEditor "1" -- "0.." Group: contains 
-DrawingEditor -- XMLAdapter: contains 
-XMLAdapter "1" --|> "1" XML_ADAPTEE
 
 @enduml
